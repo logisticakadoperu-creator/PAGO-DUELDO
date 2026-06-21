@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>PagosSueldo</title>
+<meta name="theme-color" content="#0B3D2E"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="PagosSueldo"/>
+<link rel="manifest" href="data:application/json,{%22name%22:%22PagosSueldo%22,%22short_name%22:%22PagosSueldo%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230B3D2E%22,%22theme_color%22:%22%230B3D2E%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230B3D2E'/%3E%3Ctext y='.9em' font-size='80'%3E💵%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}"/>
+<style>
+  :root {
+    --green:    #0B3D2E;
+    --green-lt: #14573F;
+    --gold:     #D4A24C;
+    --gold-lt:  #F3E3C3;
+    --cream:    #FAF6EE;
+    --white:    #FFFFFF;
+    --text:     #1C2B24;
+    --text-2:   #5E6E66;
+    --ok:       #1E8449;
+    --ok-lt:    #D5F5E3;
+    --red:      #B0382B;
+    --red-lt:   #FADBD8;
+    --amber:    #C7861A;
+    --amber-lt: #FBEAD0;
+    --gray:     #F2F3F0;
+    --gray-2:   #E4E7E2;
+    --gray-3:   #BCC2BB;
+    --radius:   14px;
+    --shadow:   0 2px 14px rgba(11,61,46,0.12);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--cream);
+         color:var(--text); min-height:100vh; padding-bottom:80px; }
+
+  .topbar { background:var(--green); color:#fff; padding:14px 16px 10px;
+            position:sticky; top:0; z-index:100; box-shadow:var(--shadow); }
+  .topbar h1 { font-size:18px; font-weight:800; letter-spacing:.3px;
+               display:flex; align-items:center; gap:8px; }
+  .topbar p  { font-size:11px; color:var(--gold-lt); margin-top:2px; }
+
+  .botnav { position:fixed; bottom:0; left:0; right:0; background:var(--white);
+            border-top:2px solid var(--gray-2);
+            display:flex; z-index:100; box-shadow:0 -2px 12px rgba(0,0,0,.08); }
+  .botnav button { flex:1; border:none; background:none; padding:10px 4px 8px;
+                   display:flex; flex-direction:column; align-items:center;
+                   gap:3px; font-size:10px; color:var(--text-2); cursor:pointer; }
+  .botnav button.active { color:var(--green); font-weight:700; }
+  .botnav button.active .nav-icon { background:var(--green); color:#fff; }
+  .nav-icon { font-size:18px; width:36px; height:28px; border-radius:8px;
+              display:flex; align-items:center; justify-content:center;
+              transition:background .2s; }
+
+  .screen { display:none; padding:14px 12px; }
+  .screen.active { display:block; }
+
+  .card { background:var(--white); border-radius:var(--radius);
+          box-shadow:var(--shadow); margin-bottom:10px; overflow:hidden; }
+  .card-header { background:var(--green); color:#fff; padding:12px 14px;
+                 font-size:13px; font-weight:700; }
+
+  label { display:block; font-size:11px; font-weight:700; color:var(--text-2);
+          margin-bottom:4px; text-transform:uppercase; letter-spacing:.4px; }
+  input, select { width:100%; border:1.5px solid var(--gray-2);
+                  border-radius:9px; padding:11px 12px; font-size:15px;
+                  color:var(--text); background:var(--white); outline:none; }
+  input:focus, select:focus { border-color:var(--green-lt); }
+  .field { margin-bottom:12px; }
+  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .btn { width:100%; padding:13px; border:none; border-radius:11px;
+         font-size:15px; font-weight:700; cursor:pointer; }
+  .btn:active { opacity:.8; }
+  .btn-primary { background:var(--green); color:#fff; }
+  .btn-gold    { background:var(--gold); color:var(--green); }
+  .btn-red     { background:var(--red); color:#fff; }
+  .btn-outline { background:var(--white); color:var(--green); border:2px solid var(--green); }
+
+  .kpi-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+               margin-bottom:12px; }
+  .kpi { background:var(--white); border-radius:11px; padding:10px 8px;
+         text-align:center; box-shadow:var(--shadow); }
+  .kpi .val { font-size:16px; font-weight:800; }
+  .kpi .lbl { font-size:10px; color:var(--text-2); margin-top:2px; }
+
+  .list-item { background:var(--white); border-radius:11px; padding:12px 14px;
+               margin-bottom:8px; box-shadow:var(--shadow);
+               display:flex; align-items:center; gap:10px;
+               border-left:4px solid transparent; }
+  .list-item.ok     { border-left-color:var(--ok); }
+  .list-item.pend   { border-left-color:var(--amber); }
+  .list-item .avatar { width:42px; height:42px; border-radius:50%;
+                       background:var(--green); color:#fff; font-size:16px;
+                       font-weight:800; display:flex; align-items:center;
+                       justify-content:center; flex-shrink:0; overflow:hidden; }
+  .list-item .avatar img { width:100%; height:100%; object-fit:cover; }
+  .list-item .info { flex:1; min-width:0; cursor:pointer; }
+  .list-item .name { font-size:14px; font-weight:700; white-space:nowrap;
+                     overflow:hidden; text-overflow:ellipsis; }
+  .list-item .sub  { font-size:12px; color:var(--text-2); margin-top:2px; }
+
+  .icon-btn { width:38px; height:38px; border-radius:50%; border:none;
+              display:flex; align-items:center; justify-content:center;
+              font-size:17px; cursor:pointer; flex-shrink:0; }
+  .icon-call { background:var(--ok-lt); color:var(--ok); }
+  .icon-wa   { background:#DDF5E1; color:#1F9D49; }
+
+  .badge { display:inline-block; padding:3px 9px; border-radius:20px;
+           font-size:11px; font-weight:700; }
+  .badge-green  { background:var(--ok-lt); color:var(--ok); }
+  .badge-red    { background:var(--red-lt); color:var(--red); }
+  .badge-amber  { background:var(--amber-lt); color:var(--amber); }
+
+  .searchbox { position:relative; margin-bottom:12px; }
+  .searchbox input { padding-left:38px; background:var(--white); }
+  .searchbox .icon { position:absolute; left:12px; top:50%; transform:translateY(-50%);
+                     font-size:16px; color:var(--text-2); }
+
+  .sec-title { font-size:12px; font-weight:700; color:var(--text-2);
+               text-transform:uppercase; letter-spacing:.5px;
+               margin:14px 0 8px; }
+
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+              z-index:200; align-items:flex-end; }
+  .modal-bg.open { display:flex; }
+  .modal { background:var(--white); border-radius:18px 18px 0 0;
+           padding:18px 16px 32px; width:100%; max-height:88vh; overflow-y:auto; }
+  .modal-handle { width:40px; height:4px; background:var(--gray-3);
+                  border-radius:2px; margin:0 auto 16px; }
+  .modal h2 { font-size:16px; font-weight:800; margin-bottom:16px; }
+
+  .pago-row { background:var(--gray); border-radius:11px; padding:12px;
+              margin-bottom:8px; }
+  .pago-top { display:flex; justify-content:space-between; align-items:center;
+              margin-bottom:8px; }
+  .pago-label { font-size:14px; font-weight:700; }
+  .pago-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .pago-field { background:var(--white); border-radius:8px; padding:8px 10px; }
+  .pago-field .pf-label { font-size:10px; color:var(--text-2); }
+  .pago-field .pf-val   { font-size:14px; font-weight:700; margin-top:1px; }
+
+  .voucher-box { background:var(--white); border:2px dashed var(--gray-3);
+                 border-radius:11px; padding:16px; text-align:center;
+                 margin-top:8px; cursor:pointer; }
+  .voucher-box img { max-width:100%; max-height:180px; border-radius:8px;
+                      margin-top:8px; object-fit:contain; }
+  .voucher-box .placeholder { color:var(--text-2); font-size:13px; }
+  .voucher-box .placeholder .ico { font-size:30px; display:block; margin-bottom:6px; }
+
+  .empty { text-align:center; padding:40px 20px; color:var(--text-2); }
+  .empty .ico { font-size:48px; margin-bottom:12px; }
+  .empty p { font-size:14px; }
+
+  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+           background:var(--green); color:#fff; padding:10px 20px; border-radius:30px;
+           font-size:13px; font-weight:600; opacity:0; transition:all .3s; z-index:300;
+           white-space:nowrap; max-width:90vw; overflow:hidden; text-overflow:ellipsis; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .topbar-actions { display:flex; justify-content:space-between; align-items:center; }
+  .top-btn { background:rgba(255,255,255,0.15); border:none; border-radius:8px;
+             color:#fff; padding:7px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-actions">
+    <div>
+      <h1>💵 PagosSueldo</h1>
+      <p>Control de pagos y comprobantes</p>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="top-btn" onclick="exportarDatos()">📤 Backup</button>
+      <button class="top-btn" onclick="document.getElementById('import-file').click()">📥 Restaurar</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarDatos(this)"/>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ INICIO ═══════ -->
+<div class="screen active" id="sc-inicio">
+  <div class="kpi-strip">
+    <div class="kpi"><div class="val" id="k-pagadores">0</div><div class="lbl">Pagadores</div></div>
+    <div class="kpi"><div class="val" id="k-pagos">0</div><div class="lbl">Pagos</div></div>
+    <div class="kpi"><div class="val" id="k-total" style="color:var(--ok)">S/0</div><div class="lbl">Total cobrado</div></div>
+  </div>
+
+  <div class="sec-title">📅 Últimos pagos registrados</div>
+  <div id="lista-recientes"></div>
+</div>
+
+<!-- ═══════ PAGADORES ═══════ -->
+<div class="screen" id="sc-pagadores">
+  <div class="searchbox">
+    <span class="icon">🔍</span>
+    <input type="text" id="search-pag" placeholder="Buscar pagador…" oninput="renderPagadores()"/>
+  </div>
+  <button class="btn btn-primary" onclick="document.getElementById('c-id').value=''; openModal('modal-pagador')" style="margin-bottom:12px">
+    ＋ Nuevo pagador
+  </button>
+  <div id="lista-pagadores"></div>
+</div>
+
+<!-- ═══════ PAGOS ═══════ -->
+<div class="screen" id="sc-pagos">
+  <button class="btn btn-gold" onclick="openModal('modal-pago')" style="margin-bottom:12px">
+    ＋ Registrar pago
+  </button>
+  <div class="searchbox">
+    <span class="icon">🔍</span>
+    <input type="text" id="search-pagos" placeholder="Buscar pagador o pago…" oninput="renderPagos()"/>
+  </div>
+  <div id="lista-pagos"></div>
+</div>
+
+<!-- ═══════ BOTTOM NAV ═══════ -->
+<nav class="botnav">
+  <button onclick="goTo('inicio')" id="nav-inicio" class="active">
+    <div class="nav-icon">🏠</div>Inicio
+  </button>
+  <button onclick="goTo('pagadores')" id="nav-pagadores">
+    <div class="nav-icon">👥</div>Pagadores
+  </button>
+  <button onclick="goTo('pagos')" id="nav-pagos">
+    <div class="nav-icon">💵</div>Pagos
+  </button>
+</nav>
+
+<!-- ═══ MODAL NUEVO/EDITAR PAGADOR ═══ -->
+<div class="modal-bg" id="modal-pagador" onclick="closeModalBg(event,'modal-pagador')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modal-pag-titulo">👤 Nuevo pagador</h2>
+    <input type="hidden" id="c-id"/>
+    <div class="field">
+      <label>Nombre completo</label>
+      <input type="text" id="c-nombre" placeholder="Ej: Empresa XYZ / Jefe"/>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Teléfono (WhatsApp)</label>
+        <input type="tel" id="c-tel" placeholder="999888777"/>
+      </div>
+      <div class="field">
+        <label>Cargo / Relación</label>
+        <input type="text" id="c-cargo" placeholder="Jefe, RRHH…"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarPagador()" style="margin-bottom:10px">💾 Guardar pagador</button>
+    <button class="btn btn-red" id="btn-eliminar-pag" onclick="confirmarEliminar()" style="display:none">🗑 Eliminar pagador</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL CONFIRMAR ELIMINACIÓN ═══ -->
+<div class="modal-bg" id="modal-confirmar" onclick="closeModalBg(event,'modal-confirmar')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:10px 0 20px">
+      <div style="font-size:48px;margin-bottom:12px">⚠️</div>
+      <h2 style="margin-bottom:8px">¿Eliminar pagador?</h2>
+      <p id="confirmar-texto" style="font-size:14px;color:var(--text-2);margin-bottom:20px"></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn" style="background:var(--gray-2);color:var(--text)"
+          onclick="closeModal('modal-confirmar')">Cancelar</button>
+        <button class="btn btn-red" onclick="eliminarPagador()">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL NUEVO PAGO ═══ -->
+<div class="modal-bg" id="modal-pago" onclick="closeModalBg(event,'modal-pago')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>💵 Registrar pago</h2>
+    <div class="field">
+      <label>Pagador</label>
+      <select id="p-pagador"><option value="">— Selecciona un pagador —</option></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Monto (S/.)</label>
+        <input type="number" id="p-monto" placeholder="1500"/>
+      </div>
+      <div class="field">
+        <label>Fecha de pago</label>
+        <input type="date" id="p-fecha"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Concepto</label>
+      <input type="text" id="p-concepto" placeholder="Sueldo de junio, adelanto…"/>
+    </div>
+
+    <label>Comprobante / Voucher</label>
+    <div class="voucher-box" id="voucher-box" onclick="document.getElementById('voucher-input').click()">
+      <div class="placeholder" id="voucher-placeholder">
+        <span class="ico">🖼️</span>
+        Toca para elegir foto del comprobante desde galería
+      </div>
+      <img id="voucher-preview" style="display:none"/>
+    </div>
+    <input type="file" id="voucher-input" accept="image/*"
+           style="display:none" onchange="previewVoucher(this)"/>
+
+    <button class="btn btn-primary" onclick="guardarPago()" style="margin-top:16px">💾 Guardar pago</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL DETALLE PAGADOR / PAGOS ═══ -->
+<div class="modal-bg" id="modal-detalle" onclick="closeModalBg(event,'modal-detalle')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detalle-content"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL VER VOUCHER GRANDE ═══ -->
+<div class="modal-bg" id="modal-voucher" onclick="closeModalBg(event,'modal-voucher')">
+  <div class="modal" style="text-align:center">
+    <div class="modal-handle"></div>
+    <h2>📷 Comprobante</h2>
+    <img id="voucher-grande" style="max-width:100%;border-radius:12px"/>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+//  STORAGE
+// ════════════════════════════════════════════════
+const DB = {
+  get pagadores() { return JSON.parse(localStorage.getItem('ps_pagadores') || '[]'); },
+  get pagos()     { return JSON.parse(localStorage.getItem('ps_pagos') || '[]'); },
+  savePag(d)  { localStorage.setItem('ps_pagadores', JSON.stringify(d)); },
+  savePago(d) { localStorage.setItem('ps_pagos', JSON.stringify(d)); },
+};
+
+function fmt(n) {
+  return 'S/.' + parseFloat(n||0).toLocaleString('es-PE',
+    {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function soloDigitos(tel) { return (tel||'').replace(/\D/g,''); }
+
+// ════════════════════════════════════════════════
+//  NAVEGACIÓN
+// ════════════════════════════════════════════════
+function goTo(sc) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.botnav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('sc-'+sc).classList.add('active');
+  document.getElementById('nav-'+sc).classList.add('active');
+  if (sc==='inicio')     renderInicio();
+  if (sc==='pagadores')  renderPagadores();
+  if (sc==='pagos')      renderPagos();
+}
+
+function openModal(id) {
+  if (id==='modal-pago') llenarSelectPagadores();
+  if (id==='modal-pagador') {
+    if (!document.getElementById('c-id').value) {
+      document.getElementById('modal-pag-titulo').textContent = '👤 Nuevo pagador';
+      document.getElementById('btn-eliminar-pag').style.display = 'none';
+      ['c-nombre','c-tel','c-cargo'].forEach(i => document.getElementById(i).value = '');
+    }
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalBg(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+// ════════════════════════════════════════════════
+//  PAGADORES
+// ════════════════════════════════════════════════
+function guardarPagador() {
+  const nombre = document.getElementById('c-nombre').value.trim();
+  if (!nombre) { toast('⚠️ El nombre es obligatorio'); return; }
+  const existeId = parseInt(document.getElementById('c-id').value) || null;
+  const lista = DB.pagadores;
+
+  if (existeId) {
+    const idx = lista.findIndex(x => x.id === existeId);
+    if (idx >= 0) {
+      lista[idx].nombre = nombre;
+      lista[idx].tel    = document.getElementById('c-tel').value.trim();
+      lista[idx].cargo  = document.getElementById('c-cargo').value.trim();
+    }
+    DB.savePag(lista);
+    toast('✅ Pagador actualizado');
+  } else {
+    const nuevo = {
+      id: Date.now(),
+      codigo: 'Pag_' + String(lista.length + 1).padStart(3,'0'),
+      nombre,
+      tel:   document.getElementById('c-tel').value.trim(),
+      cargo: document.getElementById('c-cargo').value.trim(),
+    };
+    lista.push(nuevo);
+    DB.savePag(lista);
+    toast('✅ Pagador registrado: ' + nuevo.codigo);
+  }
+  closeModal('modal-pagador');
+  ['c-id','c-nombre','c-tel','c-cargo'].forEach(id => document.getElementById(id).value='');
+  renderPagadores(); renderInicio();
+}
+
+function editarPagador(pid) {
+  const p = DB.pagadores.find(x => x.id === pid);
+  if (!p) return;
+  document.getElementById('c-id').value     = p.id;
+  document.getElementById('c-nombre').value = p.nombre;
+  document.getElementById('c-tel').value    = p.tel || '';
+  document.getElementById('c-cargo').value  = p.cargo || '';
+  document.getElementById('modal-pag-titulo').textContent = '✏️ Editar — ' + p.codigo;
+  document.getElementById('btn-eliminar-pag').style.display = 'block';
+  closeModal('modal-detalle');
+  openModal('modal-pagador');
+}
+
+let _eliminarId = null;
+function confirmarEliminar() {
+  _eliminarId = parseInt(document.getElementById('c-id').value) || null;
+  if (!_eliminarId) return;
+  const p = DB.pagadores.find(x => x.id === _eliminarId);
+  const nPagos = DB.pagos.filter(x => x.pagadorId === _eliminarId).length;
+  document.getElementById('confirmar-texto').innerHTML =
+    `<strong>${p ? p.nombre : ''}</strong><br>` +
+    (nPagos > 0
+      ? `⚠️ Tiene <strong>${nPagos} pago${nPagos>1?'s':''}</strong> registrados que también se eliminarán.`
+      : 'Esta acción no se puede deshacer.');
+  closeModal('modal-pagador');
+  openModal('modal-confirmar');
+}
+
+function eliminarPagador() {
+  if (!_eliminarId) return;
+  let pagadores = DB.pagadores.filter(x => x.id !== _eliminarId);
+  let pagos     = DB.pagos.filter(x => x.pagadorId !== _eliminarId);
+  DB.savePag(pagadores); DB.savePago(pagos);
+  _eliminarId = null;
+  document.getElementById('c-id').value = '';
+  closeModal('modal-confirmar');
+  toast('🗑 Pagador eliminado');
+  renderPagadores(); renderInicio(); renderPagos();
+}
+
+function renderPagadores() {
+  const q    = (document.getElementById('search-pag')||{value:''}).value.toLowerCase();
+  const list = DB.pagadores.filter(c =>
+    c.nombre.toLowerCase().includes(q) || c.codigo.toLowerCase().includes(q));
+  const el = document.getElementById('lista-pagadores');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="ico">👥</div>
+      <p>${q ? 'Sin resultados' : 'Aún no hay pagadores registrados'}</p></div>`;
+    return;
+  }
+  const totales = totalPorPagador();
+  el.innerHTML = list.map(c => {
+    const total = totales[c.id] || 0;
+    const ini   = c.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const tel   = soloDigitos(c.tel);
+    return `<div class="list-item ${total>0?'ok':'pend'}">
+      <div class="avatar" onclick="verPagador(${c.id})">${ini}</div>
+      <div class="info" onclick="verPagador(${c.id})">
+        <div class="name">${c.nombre}</div>
+        <div class="sub">${c.codigo}${c.cargo?' · '+c.cargo:''}</div>
+        ${total>0?`<div class="sub" style="color:var(--ok);font-weight:700;margin-top:2px">Total recibido: ${fmt(total)}</div>`:''}
+      </div>
+      ${tel ? `
+        <button class="icon-btn icon-call" onclick="llamar('${tel}')" title="Llamar">📞</button>
+        <button class="icon-btn icon-wa" onclick="abrirWhatsApp('${tel}','${c.nombre.replace(/'/g,"")}')" title="WhatsApp">💬</button>
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+function verPagador(pid) {
+  const p = DB.pagadores.find(x=>x.id===pid);
+  if (!p) return;
+  const pagos = DB.pagos.filter(x=>x.pagadorId===pid).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const total = pagos.reduce((s,x)=>s+x.monto,0);
+  const ini   = p.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const tel   = soloDigitos(p.tel);
+  document.getElementById('detalle-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="avatar" style="width:52px;height:52px;font-size:20px">${ini}</div>
+      <div style="flex:1">
+        <div style="font-size:17px;font-weight:800">${p.nombre}</div>
+        <div style="font-size:12px;color:var(--text-2)">${p.codigo}${p.cargo?' · '+p.cargo:''}</div>
+        <div style="font-size:12px;color:var(--text-2)">📞 ${p.tel||'Sin teléfono'}</div>
+      </div>
+      <button class="icon-btn icon-call" style="width:44px;height:44px;font-size:20px" onclick="llamar('${tel}')">📞</button>
+    </div>
+    ${tel ? `<button class="btn" style="background:#DDF5E1;color:#1F9D49;margin-bottom:14px"
+      onclick="abrirWhatsApp('${tel}','${p.nombre.replace(/'/g,"")}')">💬 Enviar mensaje de WhatsApp</button>` : ''}
+    <div class="kpi-strip">
+      <div class="kpi"><div class="val" style="color:var(--ok)">${fmt(total)}</div><div class="lbl">Total recibido</div></div>
+      <div class="kpi"><div class="val">${pagos.length}</div><div class="lbl">Pagos</div></div>
+      <div class="kpi"><div class="val">${pagos[0]?fmtDate(pagos[0].fecha):'—'}</div><div class="lbl">Último pago</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn btn-outline" style="flex:1" onclick="editarPagador(${p.id})">✏️ Editar</button>
+    </div>
+    <div class="sec-title">Historial de pagos</div>
+    ${pagos.length ? pagosHtml(pagos) : '<div class="empty"><p>Sin pagos registrados</p></div>'}
+  `;
+  openModal('modal-detalle');
+}
+
+// ════════════════════════════════════════════════
+//  LLAMAR / WHATSAPP
+// ════════════════════════════════════════════════
+function llamar(tel) {
+  if (!tel) { toast('⚠️ Sin número registrado'); return; }
+  window.location.href = 'tel:' + tel;
+}
+function abrirWhatsApp(tel, nombre) {
+  if (!tel) { toast('⚠️ Sin número registrado'); return; }
+  let numero = tel;
+  // Si no tiene código de país asumimos que falta (ajustable por el usuario)
+  const msg = encodeURIComponent(`Hola ${nombre}, te escribo por el registro de pagos.`);
+  window.open(`https://wa.me/${numero}?text=${msg}`, '_blank');
+}
+
+// ════════════════════════════════════════════════
+//  PAGOS
+// ════════════════════════════════════════════════
+let _voucherData = null;
+
+function llenarSelectPagadores() {
+  const sel = document.getElementById('p-pagador');
+  sel.innerHTML = '<option value="">— Selecciona un pagador —</option>' +
+    DB.pagadores.map(c=>`<option value="${c.id}">${c.codigo} – ${c.nombre}</option>`).join('');
+  document.getElementById('p-fecha').value = today();
+  document.getElementById('p-monto').value = '';
+  document.getElementById('p-concepto').value = '';
+  _voucherData = null;
+  document.getElementById('voucher-preview').style.display='none';
+  document.getElementById('voucher-placeholder').style.display='block';
+}
+
+function previewVoucher(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _voucherData = e.target.result;
+    const img = document.getElementById('voucher-preview');
+    img.src = _voucherData;
+    img.style.display = 'block';
+    document.getElementById('voucher-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function guardarPago() {
+  const pid    = parseInt(document.getElementById('p-pagador').value);
+  const monto  = parseFloat(document.getElementById('p-monto').value)||0;
+  const fecha  = document.getElementById('p-fecha').value;
+  const concepto = document.getElementById('p-concepto').value.trim();
+
+  if (!pid)   { toast('⚠️ Selecciona un pagador'); return; }
+  if (!monto) { toast('⚠️ Ingresa el monto'); return; }
+  if (!fecha) { toast('⚠️ Ingresa la fecha'); return; }
+
+  const pagos = DB.pagos;
+  pagos.push({
+    id: Date.now(),
+    pagadorId: pid,
+    monto, fecha, concepto,
+    voucher: _voucherData,
+    num: pagos.length + 1,
+  });
+  DB.savePago(pagos);
+  closeModal('modal-pago');
+  toast('✅ Pago registrado correctamente');
+  renderPagos(); renderInicio();
+}
+
+function renderPagos() {
+  const q     = (document.getElementById('search-pagos')||{value:''}).value.toLowerCase();
+  const pagos = DB.pagos.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha) || b.id-a.id);
+  const pagadores = DB.pagadores;
+  const list = pagos.filter(p => {
+    const c = pagadores.find(x=>x.id===p.pagadorId);
+    return !q || (c&&c.nombre.toLowerCase().includes(q)) ||
+           (p.concepto||'').toLowerCase().includes(q);
+  });
+  const el = document.getElementById('lista-pagos');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="ico">💵</div>
+      <p>Sin pagos registrados</p></div>`; return;
+  }
+  el.innerHTML = list.map(p => {
+    const c   = pagadores.find(x=>x.id===p.pagadorId);
+    const ini = c ? c.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : '??';
+    return `<div class="list-item ok" onclick="verPagoDetalle(${p.id})">
+      <div class="avatar">
+        ${p.voucher ? `<img src="${p.voucher}"/>` : ini}
+      </div>
+      <div class="info">
+        <div class="name">${c?c.nombre:'?'}</div>
+        <div class="sub">${p.concepto || 'Sin concepto'} · ${fmtDate(p.fecha)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:14px;font-weight:800;color:var(--ok)">${fmt(p.monto)}</div>
+        ${p.voucher ? '<div style="font-size:10px;color:var(--text-2)">📷 con voucher</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function verPagoDetalle(pagoId) {
+  const p = DB.pagos.find(x=>x.id===pagoId);
+  if (!p) return;
+  const c = DB.pagadores.find(x=>x.id===p.pagadorId);
+  document.getElementById('detalle-content').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:16px;font-weight:800">${fmt(p.monto)}</div>
+      <div style="font-size:13px;color:var(--text-2)">${c?c.nombre:'?'} · ${fmtDate(p.fecha)}</div>
+      <div style="font-size:13px;color:var(--text-2)">${p.concepto || 'Sin concepto'}</div>
+    </div>
+    ${p.voucher ? `
+      <div class="sec-title">Comprobante</div>
+      <img src="${p.voucher}" style="width:100%;border-radius:12px;cursor:pointer"
+        onclick="verVoucherGrande('${p.voucher.replace(/'/g,"\\'")}')"/>
+    ` : '<div class="empty" style="padding:20px"><p>Sin comprobante adjunto</p></div>'}
+  `;
+  openModal('modal-detalle');
+}
+
+function verVoucherGrande(src) {
+  document.getElementById('voucher-grande').src = src;
+  openModal('modal-voucher');
+}
+
+// ════════════════════════════════════════════════
+//  PAGOS HTML reutilizable (historial dentro de pagador)
+// ════════════════════════════════════════════════
+function pagosHtml(pagos) {
+  return pagos.map(p => `
+    <div class="pago-row">
+      <div class="pago-top">
+        <span class="pago-label">${fmt(p.monto)}</span>
+        <span class="badge badge-green">✅ ${fmtDate(p.fecha)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:6px">${p.concepto||'Sin concepto'}</div>
+      ${p.voucher
+        ? `<img src="${p.voucher}" style="width:100%;border-radius:8px;cursor:pointer;max-height:140px;object-fit:cover"
+             onclick="verVoucherGrande('${p.voucher.replace(/'/g,"\\'")}')"/>`
+        : `<div style="font-size:11px;color:var(--text-2)">Sin comprobante</div>`}
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════
+//  INICIO
+// ════════════════════════════════════════════════
+function totalPorPagador() {
+  const totales = {};
+  DB.pagos.forEach(p => { totales[p.pagadorId] = (totales[p.pagadorId]||0) + p.monto; });
+  return totales;
+}
+
+function renderInicio() {
+  const pagadores = DB.pagadores;
+  const pagos     = DB.pagos;
+  const total     = pagos.reduce((s,p)=>s+p.monto,0);
+
+  document.getElementById('k-pagadores').textContent = pagadores.length;
+  document.getElementById('k-pagos').textContent     = pagos.length;
+  document.getElementById('k-total').textContent     = fmt(total);
+
+  const recientes = pagos.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha) || b.id-a.id).slice(0,6);
+  const el = document.getElementById('lista-recientes');
+  if (!recientes.length) {
+    el.innerHTML = `<div class="empty"><div class="ico">💵</div><p>Aún no registras pagos</p></div>`;
+    return;
+  }
+  el.innerHTML = recientes.map(p => {
+    const c   = pagadores.find(x=>x.id===p.pagadorId);
+    const ini = c ? c.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : '??';
+    return `<div class="list-item ok" onclick="verPagoDetalle(${p.id})">
+      <div class="avatar">${p.voucher ? `<img src="${p.voucher}"/>` : ini}</div>
+      <div class="info">
+        <div class="name">${c?c.nombre:'?'}</div>
+        <div class="sub">${fmtDate(p.fecha)} · ${p.concepto||'Sin concepto'}</div>
+      </div>
+      <div style="font-size:14px;font-weight:800;color:var(--ok)">${fmt(p.monto)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════
+//  BACKUP
+// ════════════════════════════════════════════════
+function exportarDatos() {
+  const data = { pagadores: DB.pagadores, pagos: DB.pagos, fecha: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'pagossueldo_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Backup guardado en Descargas');
+}
+
+function importarDatos(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.pagadores || !data.pagos) throw new Error();
+      DB.savePag(data.pagadores);
+      DB.savePago(data.pagos);
+      localStorage.setItem('ps_iniciado', '1');
+      toast('✅ Datos restaurados correctamente');
+      renderInicio(); renderPagadores(); renderPagos();
+    } catch { toast('⚠️ Archivo de backup inválido'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+function init() {
+  const yaIniciado = localStorage.getItem('ps_iniciado');
+  if (!yaIniciado) {
+    DB.savePag([
+      {id:1001, codigo:'Pag_001', nombre:'Empresa Ejemplo S.A.', tel:'51999888777', cargo:'Recursos Humanos'}
+    ]);
+    DB.savePago([
+      {id:2001, pagadorId:1001, monto:1500, fecha:'2026-06-01',
+       concepto:'Sueldo de mayo', voucher:null, num:1}
+    ]);
+    localStorage.setItem('ps_iniciado', '1');
+  }
+  renderInicio();
+}
+
+// Service worker para instalación
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+});
+if ('serviceWorker' in navigator) {
+  const swCode = `self.addEventListener('install',e=>self.skipWaiting());
+    self.addEventListener('activate',e=>clients.claim());
+    self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>new Response(''))));`;
+  const blob = new Blob([swCode], {type:'text/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+
+init();
+</script>
+</body>
+</html>
